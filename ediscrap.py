@@ -2,6 +2,8 @@ import xlrd, re, argparse, sys, os
 from listorm import Listorm, read_excel
 
 
+renames = {}
+
 def get_edi_code_from_gosi(xl_file):
 	
 	edis = Listorm()
@@ -41,6 +43,16 @@ def get_tables_from_gosi(xl_file, scheme):
 			records.append(record)
 
 	return Listorm(records)
+
+def retrieve_drug_info(**renames):
+	conn = pymssql.connect(server=, database=, user=, password=)
+	cursor = conn.cursor(as_dict=True)
+	drug_table_qry = 'SELECT * FROM '
+	cursor.execute(drug_table_qry)
+	records = [row for row in cursor.fetchall()]
+	lst = Listorm(record)
+	return lst.rename(**renames)
+
 
 def identify_excel(paths):
 	if len(paths) != 2:
@@ -83,10 +95,15 @@ def main():
 	xlsxs = list(filter(lambda args: args.endswith('.xlsx') or args.endswith('.xls'), sys.argv))
 	if len(xlsxs) == 2:
 		drug, target = identify_excel(xlsxs)
-		tgt_fn, tgt_ext = os.path.splitext(target)
-		filename = '{}-본원코드와 비교.xlsx'.format(tgt_fn)
-		analize_excel(drug, target, filename)
-		os.startfile(filename)
+	elif len(xlsxs) == 1:
+		target = xlsxs[0]
+		drug = retrieve_drug_info(**renames)
+	else:
+		return
+	tgt_fn, tgt_ext = os.path.splitext(target)
+	filename = '{}-본원코드와 비교.xlsx'.format(tgt_fn)
+	analize_excel(drug, target, filename)
+	os.startfile(filename)
 
 
 if __name__ == '__main__':
